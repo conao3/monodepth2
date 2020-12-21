@@ -145,6 +145,7 @@ class MonodepthOptions:
         # LOADING options
         self.parser.add_argument("--load_weights_folder",
                                  type=str,
+                                 default='models',
                                  help="name of model to load")
         self.parser.add_argument("--models_to_load",
                                  nargs="+",
