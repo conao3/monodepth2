@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import re
 import sys
 import glob
 import argparse
@@ -14,6 +15,7 @@ import numpy as np
 import PIL.Image as pil
 import matplotlib as mpl
 import matplotlib.cm as cm
+import torch.nn as nn
 
 import torch
 from torchvision import transforms, datasets
@@ -29,6 +31,8 @@ def parse_args():
 
     parser.add_argument('--image_path', type=str,
                         help='path to a test image or folder of images', required=True)
+    parser.add_argument('--dump_path', type=str,
+                        help='path to a fulder of dump')
     parser.add_argument('--model_name', type=str,
                         help='name of a pretrained model to use',
                         choices=[
@@ -94,11 +98,11 @@ def test_simple(args):
     if os.path.isfile(args.image_path):
         # Only testing on a single image
         paths = [args.image_path]
-        output_directory = os.path.dirname(args.image_path)
+        output_directory = os.path.dirname(args.image_path) if not args.dump_path else args.dump_path
     elif os.path.isdir(args.image_path):
         # Searching folder for images
         paths = glob.glob(os.path.join(args.image_path, '*.{}'.format(args.ext)))
-        output_directory = args.image_path
+        output_directory = args.image_path if not args.dump_path else args.dump_path
     else:
         raise Exception("Can not find args.image_path: {}".format(args.image_path))
 
@@ -106,6 +110,7 @@ def test_simple(args):
 
     # PREDICTING ON EACH IMAGE IN TURN
     with torch.no_grad():
+        mse = 0
         for idx, image_path in enumerate(paths):
 
             if image_path.endswith("_disp.jpg"):
@@ -136,7 +141,8 @@ def test_simple(args):
             # Saving colormapped depth image
             disp_resized_np = disp_resized.squeeze().cpu().numpy()
             vmax = np.percentile(disp_resized_np, 95)
-            normalizer = mpl.colors.Normalize(vmin=disp_resized_np.min(), vmax=vmax)
+            vmin = disp_resized_np.min()
+            normalizer = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
             mapper = cm.ScalarMappable(norm=normalizer, cmap='magma')
             colormapped_im = (mapper.to_rgba(disp_resized_np)[:, :, :3] * 255).astype(np.uint8)
             im = pil.fromarray(colormapped_im)
@@ -144,9 +150,22 @@ def test_simple(args):
             name_dest_im = os.path.join(output_directory, "{}_disp.jpeg".format(output_name))
             im.save(name_dest_im)
 
+            # Calc error
+            correct_file = re.sub(r'\.\w+', '_depth.npy', image_path)
+            if os.path.exists(correct_file):
+                correct = np.load(correct_file)[:, :, 0]
+                disp_np = disp_resized.cpu().detach().numpy()
+                disp_np = disp_np[0, 0, :, :]
+
+                correct = (correct - correct.min()) / (correct.max() - correct.min()) * 255
+                disp_np = (disp_np - disp_np.min()) / (disp_np.max() - disp_np.min()) * 255
+
+                mse = mse + ((correct - disp_np) ** 2).mean()**0.5 / 255
+
             print("   Processed {:d} of {:d} images - saved prediction to {}".format(
                 idx + 1, len(paths), name_dest_im))
 
+    print(f'mse: {mse}')
     print('-> Done!')
 
 
