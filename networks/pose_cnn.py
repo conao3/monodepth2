@@ -28,7 +28,7 @@ class PoseCNN(nn.Module):
 
         self.num_convs = len(self.convs)
 
-        self.relu = nn.ReLU(True)
+        self.relu = nn.ReLU(inplace=True)
 
         self.net = nn.ModuleList(list(self.convs.values()))
 
