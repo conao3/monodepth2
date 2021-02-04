@@ -223,16 +223,6 @@ class Trainer:
 
         self.save_opts()
 
-    def set_train(self):
-        """Convert all models to training mode"""
-        for m in self.models.values():
-            m.train()
-
-    def set_eval(self):
-        """Convert all models to testing/evaluation mode"""
-        for m in self.models.values():
-            m.eval()
-
     def train(self):
         """Run the entire training pipeline"""
         self.epoch = 0
@@ -243,6 +233,16 @@ class Trainer:
             self.run_epoch()
             if (self.epoch + 1) % self.opt.save_frequency == 0:
                 self.save_model()
+
+    def set_train(self):
+        """Convert all models to training mode"""
+        for m in self.models.values():
+            m.train()
+
+    def set_eval(self):
+        """Convert all models to testing/evaluation mode"""
+        for m in self.models.values():
+            m.eval()
 
     def run_epoch(self):
         """Run a single epoch of training and validation"""
