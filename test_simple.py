@@ -6,17 +6,15 @@
 
 import os
 import re
-import sys
 import glob
 import argparse
 import numpy as np
 import PIL.Image as pil
 import matplotlib as mpl
 import matplotlib.cm as cm
-import torch.nn as nn
 
 import torch
-from torchvision import transforms, datasets
+from torchvision import transforms
 
 import networks
 from layers import disp_to_depth
