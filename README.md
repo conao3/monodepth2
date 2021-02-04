@@ -33,6 +33,52 @@ year = {2019}
 
 ## ⚙️ Setup
 
+We recommend `anyenv`, `pyenv` and `pipenv` stack.
+
+### Requirements
+See `Pipfile.lock`.
+
+### Quick install
+```
+# anyenv, pyenv
+git clone https://github.com/anyenv/anyenv ~/.anyenv
+echo 'export PATH="$HOME/.anyenv/bin:$PATH"' >> ~/.bash_profile
+echo 'anyenv > /dev/null 2>&1 && eval "$(anyenv init -)"' >> ~/.bash_profile
+anyenv install --init
+anyenv install pyenv
+pyenv install -l
+pyenv install 3.9.1
+pyenv global 3.9.1
+
+# pipenv
+pip install pipenv
+cd /path/to/monodepth2
+pipenv sync
+
+# test run
+pipenv run python test_simple.py --image_path assets/test_image.jpg --model_name mono+stereo_640x192
+```
+
+If you use latest GPU, you may see below message and Error.
+```
+-> Loading model from  models/mono+stereo_640x192
+   Loading pretrained encoder
+/home/conao/.local/share/virtualenvs/monodepth2-3JrNFWvR/lib/python3.6/site-packages/torch/cuda/__init__.py:104: UserWarning: 
+GeForce RTX 3090 with CUDA capability sm_86 is not compatible with the current PyTorch installation.
+The current PyTorch install supports CUDA capabilities sm_37 sm_50 sm_60 sm_70 sm_75.
+If you want to use the GeForce RTX 3090 GPU with PyTorch, please check the instructions at https://pytorch.org/get-started/locally/
+```
+
+In this case, you need to install latest PyTorch.
+
+```
+pipenv run pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio===0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+```
+
+Then, you can run any python scripts.
+
+---
+
 Assuming a fresh [Anaconda](https://www.anaconda.com/download/) distribution, you can install the dependencies with:
 ```shell
 conda install pytorch=0.4.1 torchvision=0.2.1 -c pytorch
