@@ -234,16 +234,6 @@ class Trainer:
             if (self.epoch + 1) % self.opt.save_frequency == 0:
                 self.save_model()
 
-    def set_train(self):
-        """Convert all models to training mode"""
-        for m in self.models.values():
-            m.train()
-
-    def set_eval(self):
-        """Convert all models to testing/evaluation mode"""
-        for m in self.models.values():
-            m.eval()
-
     def run_epoch(self):
         """Run a single epoch of training and validation"""
         self.model_lr_scheduler.step()
@@ -252,7 +242,6 @@ class Trainer:
         self.set_train()
 
         for batch_idx, inputs in enumerate(self.train_loader):
-
             before_op_time = time.time()
 
             outputs, losses = self.process_batch(inputs)
@@ -277,6 +266,16 @@ class Trainer:
                 self.val()
 
             self.step += 1
+
+    def set_train(self):
+        """Convert all models to training mode"""
+        for m in self.models.values():
+            m.train()
+
+    def set_eval(self):
+        """Convert all models to testing/evaluation mode"""
+        for m in self.models.values():
+            m.eval()
 
     def process_batch(self, inputs):
         """Pass a minibatch through the network and generate images and losses"""
