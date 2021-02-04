@@ -12,7 +12,6 @@ matplotlib = "*"
 scikit-learn = "*"
 scikit-image = "*"
 ipython = "*"
-numpy = "*"
 
 [dev-packages]
 
