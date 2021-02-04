@@ -4,7 +4,6 @@
 # which allows for non-commercial use only, the full terms of which are made
 # available in the LICENSE file.
 
-from __future__ import absolute_import, division, print_function
 import os
 import hashlib
 import zipfile
