@@ -21,6 +21,7 @@ class PoseDecoder(nn.Module):
 
         if num_frames_to_predict_for is None:
             num_frames_to_predict_for = num_input_features - 1
+
         self.num_frames_to_predict_for = num_frames_to_predict_for
 
         self.convs = OrderedDict()
