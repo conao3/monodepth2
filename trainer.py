@@ -28,11 +28,12 @@ from IPython import embed
 class Trainer:
     def __init__(self, options):
         self.opt = options
-        self.log_path = os.path.join(self.opt.log_dir, self.opt.model_name)
 
-        # checking height and width are multiples of 32
         assert self.opt.height % 32 == 0, "'height' must be a multiple of 32"
         assert self.opt.width % 32 == 0, "'width' must be a multiple of 32"
+        assert self.opt.frame_ids[0] == 0, "frame_ids must start with 0"
+
+        self.log_path = os.path.join(self.opt.log_dir, self.opt.model_name)
 
         self.models = {}
         self.parameters_to_train = []
@@ -44,8 +45,6 @@ class Trainer:
         self.num_pose_frames = (
             2 if self.opt.pose_model_input == "pairs" else self.num_input_frames
         )
-
-        assert self.opt.frame_ids[0] == 0, "frame_ids must start with 0"
 
         self.use_pose_net = not (self.opt.use_stereo and self.opt.frame_ids == [0])
 
