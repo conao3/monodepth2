@@ -48,7 +48,7 @@ class MonoDataset(data.Dataset):
         is_train=False,
         img_ext=".jpg",
     ):
-        super(MonoDataset, self).__init__()
+        super().__init__()
 
         self.data_path = data_path
         self.filenames = filenames

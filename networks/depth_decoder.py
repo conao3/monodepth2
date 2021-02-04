@@ -17,7 +17,7 @@ class DepthDecoder(nn.Module):
     def __init__(
         self, num_ch_enc, scales=range(4), num_output_channels=1, use_skips=True
     ):
-        super(DepthDecoder, self).__init__()
+        super().__init__()
 
         self.num_output_channels = num_output_channels
         self.use_skips = use_skips
