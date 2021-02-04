@@ -292,6 +292,12 @@ You can download our precomputed disparity predictions from the following links:
 | Mono + Stereo     | 1024 x 320  | 914 MB          | [Download 🔗](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_1024x320_eigen.npy) |
 
 
+## visualize
+
+```
+/tensorboard --logdir ~/tmp
+```
+and open localhost:8080
 
 ## 👩‍⚖️ License
 Copyright © Niantic, Inc. 2019. Patent Pending.
