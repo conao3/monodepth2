@@ -100,8 +100,10 @@ class Trainer:
                 self.opt.disable_automasking
             ), "When using predictive_mask, please disable automasking with --disable_automasking"
 
-            # Our implementation of the predictive masking baseline has the the same architecture
-            # as our depth decoder. We predict a separate mask for each source frame.
+            # Our implementation of the predictive masking
+            # baseline has the the same architecture as our depth
+            # decoder. We predict a separate mask for each source
+            # frame.
             self.models["predictive_mask"] = networks.DepthDecoder(
                 self.models["encoder"].num_ch_enc,
                 self.opt.scales,
@@ -252,7 +254,8 @@ class Trainer:
 
             duration = time.time() - before_op_time
 
-            # log less frequently after the first 2000 steps to save time & disk space
+            # log less frequently after the first 2000 steps to
+            # save time & disk space
             early_phase = batch_idx % self.opt.log_frequency == 0 and self.step < 2000
 
             late_phase = self.step % 100 == 1
@@ -283,8 +286,9 @@ class Trainer:
             inputs[key] = ipt.to(self.device)
 
         if self.opt.pose_model_type == "shared":
-            # If we are using a shared encoder for both depth and pose (as advocated
-            # in monodepthv1), then all images are fed separately through the depth encoder.
+            # If we are using a shared encoder for both depth and
+            # pose (as advocated in monodepthv1), then all images
+            # are fed separately through the depth encoder.
             all_color_aug = torch.cat(
                 [inputs[("color_aug", i, 0)] for i in self.opt.frame_ids]
             )
@@ -297,7 +301,8 @@ class Trainer:
 
             outputs = self.models["depth"](features[0])
         else:
-            # Otherwise, we only feed the image with frame_id 0 through the depth encoder
+            # Otherwise, we only feed the image with frame_id 0
+            # through the depth encoder
             features = self.models["encoder"](inputs["color_aug", 0, 0])
             outputs = self.models["depth"](features)
 
@@ -316,8 +321,9 @@ class Trainer:
         """Predict poses between input frames for monocular sequences."""
         outputs = {}
         if self.num_pose_frames == 2:
-            # In this setting, we compute the pose to each source frame via a
-            # separate forward pass through the pose network.
+            # In this setting, we compute the pose to each source
+            # frame via a separate forward pass through the pose
+            # network.
 
             # select what features the pose network takes as input
             if self.opt.pose_model_type == "shared":
@@ -329,7 +335,8 @@ class Trainer:
 
             for f_i in self.opt.frame_ids[1:]:
                 if f_i != "s":
-                    # To maintain ordering we always pass frames in temporal order
+                    # To maintain ordering we always pass frames
+                    # in temporal order
                     if f_i < 0:
                         pose_inputs = [pose_feats[f_i], pose_feats[0]]
                     else:
@@ -352,7 +359,8 @@ class Trainer:
                     )
 
         else:
-            # Here we input all frames to the pose net (and predict all poses) together
+            # Here we input all frames to the pose net (and
+            # predict all poses) together
             if self.opt.pose_model_type in ["separate_resnet", "posecnn"]:
                 pose_inputs = torch.cat(
                     [
@@ -534,7 +542,8 @@ class Trainer:
 
                 reprojection_losses *= mask
 
-                # add a loss pushing mask to 1 (using nn.BCELoss for stability)
+                # add a loss pushing mask to 1 (using nn.BCELoss
+                # for stability)
                 weighting_loss = 0.2 * nn.BCELoss()(mask, torch.ones(mask.shape).cuda())
                 loss += weighting_loss.mean()
 
