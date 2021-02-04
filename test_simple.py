@@ -48,6 +48,7 @@ def parse_args():
             "stereo_1024x320",
             "mono+stereo_1024x320",
         ],
+        required=True,
     )
     parser.add_argument(
         "--ext", type=str, help="image extension to search for in folder", default="jpg"
@@ -59,10 +60,6 @@ def parse_args():
 
 def test_simple(args):
     """Function to predict for a single image or folder of images"""
-    assert (
-        args.model_name is not None
-    ), "You must specify the --model_name parameter; see README.md for an example"
-
     if torch.cuda.is_available() and not args.no_cuda:
         device = torch.device("cuda")
     else:
