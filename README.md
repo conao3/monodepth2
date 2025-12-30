@@ -1,10 +1,10 @@
 # Monodepth2
 
-This is the reference PyTorch implementation for training and testing depth estimation models using the method described in
+The reference PyTorch implementation for training and testing depth estimation models using the method described in:
 
 > **Digging into Self-Supervised Monocular Depth Prediction**
 >
-> [Clément Godard](http://www0.cs.ucl.ac.uk/staff/C.Godard/), [Oisin Mac Aodha](http://vision.caltech.edu/~macaodha/), [Michael Firman](http://www.michaelfirman.co.uk) and [Gabriel J. Brostow](http://www0.cs.ucl.ac.uk/staff/g.brostow/)  
+> [Clément Godard](http://www0.cs.ucl.ac.uk/staff/C.Godard/), [Oisin Mac Aodha](http://vision.caltech.edu/~macaodha/), [Michael Firman](http://www.michaelfirman.co.uk) and [Gabriel J. Brostow](http://www0.cs.ucl.ac.uk/staff/g.brostow/)
 >
 > [ICCV 2019 (arXiv pdf)](https://arxiv.org/abs/1806.01260)
 
@@ -16,7 +16,7 @@ This code is for non-commercial use; please see the [license file](LICENSE) for 
 
 If you find our work useful in your research please consider citing our paper:
 
-```
+```bibtex
 @article{monodepth2,
   title     = {Digging into Self-Supervised Monocular Depth Prediction},
   author    = {Cl{\'{e}}ment Godard and
@@ -24,282 +24,288 @@ If you find our work useful in your research please consider citing our paper:
                Michael Firman and
                Gabriel J. Brostow},
   booktitle = {The International Conference on Computer Vision (ICCV)},
-  month = {October},
-year = {2019}
+  month     = {October},
+  year      = {2019}
 }
 ```
 
+## Table of Contents
 
+- [Setup](#setup)
+- [Prediction for a Single Image](#prediction-for-a-single-image)
+- [KITTI Training Data](#kitti-training-data)
+- [Training](#training)
+- [KITTI Evaluation](#kitti-evaluation)
+- [Precomputed Results](#precomputed-results)
+- [Visualization](#visualization)
+- [License](#license)
 
-## ⚙️ Setup
+## Setup
 
-We recommend `anyenv`, `pyenv` and `pipenv` stack.
+We recommend using `pyenv` and `pipenv` for managing Python versions and dependencies.
 
 ### Requirements
-See `Pipfile.lock`.
 
-### Quick install
-```
-# anyenv, pyenv
+See `Pipfile.lock` for the full list of dependencies.
+
+### Quick Install
+
+```bash
+# Install pyenv (via anyenv)
 git clone https://github.com/anyenv/anyenv ~/.anyenv
 echo 'export PATH="$HOME/.anyenv/bin:$PATH"' >> ~/.bash_profile
 echo 'anyenv > /dev/null 2>&1 && eval "$(anyenv init -)"' >> ~/.bash_profile
 anyenv install --init
 anyenv install pyenv
-pyenv install -l
 pyenv install 3.9.1
 pyenv global 3.9.1
 
-# pipenv
+# Install dependencies
 pip install pipenv
 cd /path/to/monodepth2
 pipenv sync
 
-# test run
+# Test run
 pipenv run python test_simple.py --image_path assets/test_image.jpg --model_name mono+stereo_640x192
 ```
 
-If you use latest GPU, you may see below message and Error.
+### GPU Compatibility
+
+If you have a newer GPU, you may encounter the following error:
+
 ```
--> Loading model from  models/mono+stereo_640x192
-   Loading pretrained encoder
-/home/conao/.local/share/virtualenvs/monodepth2-3JrNFWvR/lib/python3.6/site-packages/torch/cuda/__init__.py:104: UserWarning: 
 GeForce RTX 3090 with CUDA capability sm_86 is not compatible with the current PyTorch installation.
-The current PyTorch install supports CUDA capabilities sm_37 sm_50 sm_60 sm_70 sm_75.
-If you want to use the GeForce RTX 3090 GPU with PyTorch, please check the instructions at https://pytorch.org/get-started/locally/
 ```
 
-In this case, you need to install latest PyTorch.
+In this case, install a compatible PyTorch version:
 
-```
+```bash
 pipenv run pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio===0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-Then, you can run any python scripts.
+### Alternative: Anaconda Setup
 
----
+If you prefer [Anaconda](https://www.anaconda.com/download/), install dependencies with:
 
-Assuming a fresh [Anaconda](https://www.anaconda.com/download/) distribution, you can install the dependencies with:
-```shell
+```bash
 conda install pytorch=0.4.1 torchvision=0.2.1 -c pytorch
 pip install tensorboardX==1.4
-conda install opencv=3.3.1   # just needed for evaluation
+conda install opencv=3.3.1   # needed for evaluation
 ```
-We ran our experiments with PyTorch 0.4.1, CUDA 9.1, Python 3.6.6 and Ubuntu 18.04.
-We have also successfully trained models with PyTorch 1.0, and our code is compatible with Python 2.7. You may have issues installing OpenCV version 3.3.1 if you use Python 3.7, we recommend to create a virtual environment with Python 3.6.6 `conda create -n monodepth2 python=3.6.6 anaconda `.
 
-<!-- We recommend using a [conda environment](https://conda.io/docs/user-guide/tasks/manage-environments.html) to avoid dependency conflicts.
+Our experiments used PyTorch 0.4.1, CUDA 9.1, Python 3.6.6, and Ubuntu 18.04. The code is also compatible with PyTorch 1.0 and Python 2.7. For Python 3.7, we recommend creating a virtual environment with Python 3.6.6:
 
-We also recommend using `pillow-simd` instead of `pillow` for faster image preprocessing in the dataloaders. -->
+```bash
+conda create -n monodepth2 python=3.6.6 anaconda
+```
 
+## Prediction for a Single Image
 
-## 🖼️ Prediction for a single image
+Run depth prediction on a single image:
 
-You can predict depth for a single image with:
-```shell
+```bash
 python test_simple.py --image_path assets/test_image.jpg --model_name mono+stereo_640x192
 ```
 
-On its first run this will download the `mono+stereo_640x192` pretrained model (99MB) into the `models/` folder.
-We provide the following  options for `--model_name`:
+On first run, the pretrained model (99MB) will be downloaded to the `models/` folder.
 
+### Available Models
 
-| `--model_name`          | Training modality | Imagenet pretrained? | Model resolution  | KITTI abs. rel. error |  delta < 1.25  |
-|-------------------------|-------------------|--------------------------|-----------------|------|----------------|
-| [`mono_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_640x192.zip)          | Mono              | Yes | 640 x 192                | 0.115                 | 0.877          |
-| [`stereo_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_640x192.zip)        | Stereo            | Yes | 640 x 192                | 0.109                 | 0.864          |
-| [`mono+stereo_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_640x192.zip)   | Mono + Stereo     | Yes | 640 x 192                | 0.106                 | 0.874          |
-| [`mono_1024x320`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_1024x320.zip)         | Mono              | Yes | 1024 x 320               | 0.115                 | 0.879          |
-| [`stereo_1024x320`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_1024x320.zip)       | Stereo            | Yes | 1024 x 320               | 0.107                 | 0.874          |
-| [`mono+stereo_1024x320`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_1024x320.zip)  | Mono + Stereo     | Yes | 1024 x 320               | 0.106                 | 0.876          |
-| [`mono_no_pt_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_no_pt_640x192.zip)          | Mono              | No | 640 x 192                | 0.132                 | 0.845          |
-| [`stereo_no_pt_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_no_pt_640x192.zip)        | Stereo            | No | 640 x 192                | 0.130                 | 0.831          |
-| [`mono+stereo_no_pt_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_no_pt_640x192.zip)   | Mono + Stereo     | No | 640 x 192                | 0.127                 | 0.836          |
+| Model Name | Training Modality | ImageNet Pretrained | Resolution | KITTI Abs. Rel. Error | delta < 1.25 |
+|------------|-------------------|---------------------|------------|----------------------|--------------|
+| [`mono_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_640x192.zip) | Mono | Yes | 640 x 192 | 0.115 | 0.877 |
+| [`stereo_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_640x192.zip) | Stereo | Yes | 640 x 192 | 0.109 | 0.864 |
+| [`mono+stereo_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_640x192.zip) | Mono + Stereo | Yes | 640 x 192 | 0.106 | 0.874 |
+| [`mono_1024x320`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_1024x320.zip) | Mono | Yes | 1024 x 320 | 0.115 | 0.879 |
+| [`stereo_1024x320`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_1024x320.zip) | Stereo | Yes | 1024 x 320 | 0.107 | 0.874 |
+| [`mono+stereo_1024x320`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_1024x320.zip) | Mono + Stereo | Yes | 1024 x 320 | 0.106 | 0.876 |
+| [`mono_no_pt_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_no_pt_640x192.zip) | Mono | No | 640 x 192 | 0.132 | 0.845 |
+| [`stereo_no_pt_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_no_pt_640x192.zip) | Stereo | No | 640 x 192 | 0.130 | 0.831 |
+| [`mono+stereo_no_pt_640x192`](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_no_pt_640x192.zip) | Mono + Stereo | No | 640 x 192 | 0.127 | 0.836 |
 
-You can also download models trained on the odometry split with [monocular](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_odom_640x192.zip) and [mono+stereo](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_odom_640x192.zip) training modalities.
+Additional models trained on the odometry split: [monocular](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_odom_640x192.zip) and [mono+stereo](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_odom_640x192.zip).
 
-Finally, we provide resnet 50 depth estimation models trained with [ImageNet pretrained weights](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_resnet50_640x192.zip) and [trained from scratch](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_resnet50_no_pt_640x192.zip). 
-Make sure to set `--num_layers 50` if using these.
+ResNet-50 models: [ImageNet pretrained](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_resnet50_640x192.zip) and [trained from scratch](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_resnet50_no_pt_640x192.zip). Set `--num_layers 50` when using these.
 
-## 💾 KITTI training data
+## KITTI Training Data
 
-You can download the entire [raw KITTI dataset](http://www.cvlibs.net/datasets/kitti/raw_data.php) by running:
-```shell
+Download the [raw KITTI dataset](http://www.cvlibs.net/datasets/kitti/raw_data.php):
+
+```bash
 wget -i splits/kitti_archives_to_download.txt -P kitti_data/
 ```
-Then unzip with
-```shell
+
+Unzip the files:
+
+```bash
 cd kitti_data
 unzip "*.zip"
 cd ..
 ```
-**Warning:** it weighs about **175GB**, so make sure you have enough space to unzip too!
 
-Our default settings expect that you have converted the png images to jpeg with this command, **which also deletes the raw KITTI `.png` files**:
-```shell
+**Note:** The dataset is approximately 175GB, so ensure you have sufficient disk space.
+
+### Image Conversion
+
+Our default settings expect JPEG images. Convert PNG to JPEG with:
+
+```bash
 find kitti_data/ -name '*.png' | parallel 'convert -quality 92 -sampling-factor 2x2,1x1,1x1 {.}.png {.}.jpg && rm {}'
 ```
-**or** you can skip this conversion step and train from raw png files by adding the flag `--png` when training, at the expense of slower load times.
 
-The above conversion command creates images which match our experiments, where KITTI `.png` images were converted to `.jpg` on Ubuntu 16.04 with default chroma subsampling `2x2,1x1,1x1`.
-We found that Ubuntu 18.04 defaults to `2x2,2x2,2x2`, which gives different results, hence the explicit parameter in the conversion command.
+**Important:** This command deletes the original PNG files. Alternatively, train from raw PNG files by adding the `--png` flag during training.
 
-You can also place the KITTI dataset wherever you like and point towards it with the `--data_path` flag during training and evaluation.
+The explicit sampling factor `2x2,1x1,1x1` is specified because Ubuntu 18.04 defaults to `2x2,2x2,2x2`, which produces different results.
 
-**Splits**
+You can store the KITTI dataset in any location and specify it with the `--data_path` flag.
 
-The train/test/validation splits are defined in the `splits/` folder.
-By default, the code will train a depth model using [Zhou's subset](https://github.com/tinghuiz/SfMLearner) of the standard Eigen split of KITTI, which is designed for monocular training.
-You can also train a model using the new [benchmark split](http://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_prediction) or the [odometry split](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) by setting the `--split` flag.
+### Splits
 
+Train/test/validation splits are defined in the `splits/` folder. By default, the code uses [Zhou's subset](https://github.com/tinghuiz/SfMLearner) of the standard Eigen split. You can also use the [benchmark split](http://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_prediction) or [odometry split](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) with the `--split` flag.
 
-**Custom dataset**
+### Custom Dataset
 
-You can train on a custom monocular or stereo dataset by writing a new dataloader class which inherits from `MonoDataset` – see the `KITTIDataset` class in `datasets/kitti_dataset.py` for an example.
+Train on a custom dataset by creating a new dataloader class that inherits from `MonoDataset`. See `datasets/kitti_dataset.py` for reference.
 
+## Training
 
-## ⏳ Training
+By default, models and TensorBoard event files are saved to `~/tmp/<model_name>`. Change this with the `--log_dir` flag.
 
-By default models and tensorboard event files are saved to `~/tmp/<model_name>`.
-This can be changed with the `--log_dir` flag.
+### Monocular Training
 
-
-**Monocular training:**
-```shell
+```bash
 python train.py --model_name mono_model
 ```
 
-**Stereo training:**
+### Stereo Training
 
-Our code defaults to using Zhou's subsampled Eigen training data. For stereo-only training we have to specify that we want to use the full Eigen training set – see paper for details.
-```shell
+For stereo-only training, use the full Eigen training set:
+
+```bash
 python train.py --model_name stereo_model \
   --frame_ids 0 --use_stereo --split eigen_full
 ```
 
-**Monocular + stereo training:**
-```shell
+### Monocular + Stereo Training
+
+```bash
 python train.py --model_name mono+stereo_model \
   --frame_ids 0 -1 1 --use_stereo
 ```
 
+### GPU Configuration
 
-### GPUs
+The code runs on a single GPU. Specify which GPU to use:
 
-The code can only be run on a single GPU.
-You can specify which GPU to use with the `CUDA_VISIBLE_DEVICES` environment variable:
-```shell
+```bash
 CUDA_VISIBLE_DEVICES=2 python train.py --model_name mono_model
 ```
 
-All our experiments were performed on a single NVIDIA Titan Xp.
+All experiments were performed on a single NVIDIA Titan Xp.
 
-| Training modality | Approximate GPU memory  | Approximate training time   |
-|-------------------|-------------------------|-----------------------------|
-| Mono              | 9GB                     | 12 hours                    |
-| Stereo            | 6GB                     | 8 hours                     |
-| Mono + Stereo     | 11GB                    | 15 hours                    |
+| Training Modality | GPU Memory | Training Time |
+|-------------------|------------|---------------|
+| Mono | 9GB | 12 hours |
+| Stereo | 6GB | 8 hours |
+| Mono + Stereo | 11GB | 15 hours |
 
+### Finetuning
 
+Load an existing model for finetuning:
 
-### 💽 Finetuning a pretrained model
-
-Add the following to the training command to load an existing model for finetuning:
-```shell
+```bash
 python train.py --model_name finetuned_mono --load_weights_folder ~/tmp/mono_model/models/weights_19
 ```
 
+### Other Options
 
-### 🔧 Other training options
+Run `python train.py -h` or see `options.py` for additional training options including learning rates and ablation settings.
 
-Run `python train.py -h` (or look at `options.py`) to see the range of other training options, such as learning rates and ablation settings.
+## KITTI Evaluation
 
+Prepare the ground truth depth maps:
 
-## 📊 KITTI evaluation
-
-To prepare the ground truth depth maps run:
-```shell
+```bash
 python export_gt_depth.py --data_path kitti_data --split eigen
 python export_gt_depth.py --data_path kitti_data --split eigen_benchmark
 ```
-...assuming that you have placed the KITTI dataset in the default location of `./kitti_data/`.
 
-The following example command evaluates the epoch 19 weights of a model named `mono_model`:
-```shell
+### Evaluating Models
+
+For monocular models:
+
+```bash
 python evaluate_depth.py --load_weights_folder ~/tmp/mono_model/models/weights_19/ --eval_mono
 ```
-For stereo models, you must use the `--eval_stereo` flag (see note below):
-```shell
+
+For stereo models (see note below):
+
+```bash
 python evaluate_depth.py --load_weights_folder ~/tmp/stereo_model/models/weights_19/ --eval_stereo
 ```
-If you train your own model with our code you are likely to see slight differences to the publication results due to randomization in the weights initialization and data loading.
 
-An additional parameter `--eval_split` can be set.
-The three different values possible for `eval_split` are explained here:
+Results may vary slightly from published numbers due to randomization in weight initialization and data loading.
 
-| `--eval_split`        | Test set size | For models trained with... | Description  |
-|-----------------------|---------------|----------------------------|--------------|
-| **`eigen`**           | 697           | `--split eigen_zhou` (default) or `--split eigen_full` | The standard Eigen test files |
-| **`eigen_benchmark`** | 652           | `--split eigen_zhou` (default) or `--split eigen_full`  | Evaluate with the improved ground truth from the [new KITTI depth benchmark](http://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_prediction) |
-| **`benchmark`**       | 500           | `--split benchmark`        | The [new KITTI depth benchmark](http://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_prediction) test files. |
+### Evaluation Splits
 
-Because no ground truth is available for the new KITTI depth benchmark, no scores will be reported  when `--eval_split benchmark` is set.
-Instead, a set of `.png` images will be saved to disk ready for upload to the evaluation server.
+| Split | Test Set Size | For Models Trained With | Description |
+|-------|---------------|-------------------------|-------------|
+| `eigen` | 697 | `--split eigen_zhou` (default) or `--split eigen_full` | Standard Eigen test files |
+| `eigen_benchmark` | 652 | `--split eigen_zhou` (default) or `--split eigen_full` | Improved ground truth from the [KITTI depth benchmark](http://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_prediction) |
+| `benchmark` | 500 | `--split benchmark` | [KITTI depth benchmark](http://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_prediction) test files |
 
+For `--eval_split benchmark`, no scores are reported. Instead, PNG images are saved for upload to the evaluation server.
 
-**External disparities evaluation**
+### External Disparities
 
-Finally you can also use `evaluate_depth.py` to evaluate raw disparities (or inverse depth) from other methods by using the `--ext_disp_to_eval` flag:
+Evaluate disparities from other methods:
 
-```shell
+```bash
 python evaluate_depth.py --ext_disp_to_eval ~/other_method_disp.npy
 ```
 
+### Note on Stereo Evaluation
 
-**📷📷 Note on stereo evaluation**
+Our stereo models use an effective baseline of `0.1` units, while the KITTI stereo rig has a baseline of `0.54m`. A scaling factor of `5.4` must be applied for evaluation. The `--eval_stereo` flag automatically disables median scaling and applies this scale factor.
 
-Our stereo models are trained with an effective baseline of `0.1` units, while the actual KITTI stereo rig has a baseline of `0.54m`. This means a scaling of `5.4` must be applied for evaluation.
-In addition, for models trained with stereo supervision we disable median scaling.
-Setting the `--eval_stereo` flag when evaluating will automatically disable median scaling and scale predicted depths by `5.4`.
+### Odometry Evaluation
 
+For models trained with `--split odom --dataset kitti_odom --data_path /path/to/kitti/odometry/dataset`:
 
-**⤴️⤵️ Odometry evaluation**
+Download the [KITTI odometry dataset](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) (color, 65GB) and ground truth poses. Ensure PNGs are converted to JPGs.
 
-We include code for evaluating poses predicted by models trained with `--split odom --dataset kitti_odom --data_path /path/to/kitti/odometry/dataset`.
+Evaluate with:
 
-For this evaluation, the [KITTI odometry dataset](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) **(color, 65GB)** and **ground truth poses** zip files must be downloaded.
-As above, we assume that the pngs have been converted to jpgs.
-
-If this data has been unzipped to folder `kitti_odom`, a model can be evaluated with:
-```shell
+```bash
 python evaluate_pose.py --eval_split odom_9 --load_weights_folder ./odom_split.M/models/weights_29 --data_path kitti_odom/
 python evaluate_pose.py --eval_split odom_10 --load_weights_folder ./odom_split.M/models/weights_29 --data_path kitti_odom/
 ```
 
+## Precomputed Results
 
-## 📦 Precomputed results
+Download precomputed disparity predictions:
 
-You can download our precomputed disparity predictions from the following links:
+| Training Modality | Input Size | File Size | Download |
+|-------------------|------------|-----------|----------|
+| Mono | 640 x 192 | 343 MB | [Link](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_640x192_eigen.npy) |
+| Stereo | 640 x 192 | 343 MB | [Link](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_640x192_eigen.npy) |
+| Mono + Stereo | 640 x 192 | 343 MB | [Link](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_640x192_eigen.npy) |
+| Mono | 1024 x 320 | 914 MB | [Link](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_1024x320_eigen.npy) |
+| Stereo | 1024 x 320 | 914 MB | [Link](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_1024x320_eigen.npy) |
+| Mono + Stereo | 1024 x 320 | 914 MB | [Link](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_1024x320_eigen.npy) |
 
+## Visualization
 
-| Training modality | Input size  | `.npy` filesize | Eigen disparities                                                                             |
-|-------------------|-------------|-----------------|-----------------------------------------------------------------------------------------------|
-| Mono              | 640 x 192   | 343 MB          | [Download 🔗](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_640x192_eigen.npy)           |
-| Stereo            | 640 x 192   | 343 MB          | [Download 🔗](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_640x192_eigen.npy)         |
-| Mono + Stereo     | 640 x 192   | 343 MB          | [Download 🔗](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_640x192_eigen.npy)  |
-| Mono              | 1024 x 320  | 914 MB          | [Download 🔗](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_1024x320_eigen.npy)          |
-| Stereo            | 1024 x 320  | 914 MB          | [Download 🔗](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/stereo_1024x320_eigen.npy)        |
-| Mono + Stereo     | 1024 x 320  | 914 MB          | [Download 🔗](https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono%2Bstereo_1024x320_eigen.npy) |
+Launch TensorBoard to visualize training progress:
 
-
-## visualize
-
+```bash
+tensorboard --logdir ~/tmp
 ```
-/tensorboard --logdir ~/tmp
-```
-and open localhost:8080
 
-## 👩‍⚖️ License
-Copyright © Niantic, Inc. 2019. Patent Pending.
-All rights reserved.
-Please see the [license file](LICENSE) for terms.
+Then open `localhost:6006` in your browser.
+
+## License
+
+Copyright 2019 Niantic, Inc. Patent Pending. All rights reserved.
+
+Please see the [license file](LICENSE) for terms. This code is for non-commercial use only.
