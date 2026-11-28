@@ -197,8 +197,8 @@ class Trainer:
         self.backproject_depth = {}
         self.project_3d = {}
         for scale in self.opt.scales:
-            h = self.opt.height // (2 ** scale)
-            w = self.opt.width // (2 ** scale)
+            h = self.opt.height // (2**scale)
+            w = self.opt.width // (2**scale)
 
             self.backproject_depth[scale] = BackprojectDepth(self.opt.batch_size, h, w)
             self.backproject_depth[scale].to(self.device)
@@ -580,7 +580,7 @@ class Trainer:
             norm_disp = disp / (mean_disp + 1e-7)
             smooth_loss = get_smooth_loss(norm_disp, color)
 
-            loss += self.opt.disparity_smoothness * smooth_loss / (2 ** scale)
+            loss += self.opt.disparity_smoothness * smooth_loss / (2**scale)
             total_loss += loss
             losses["loss/{}".format(scale)] = loss
 

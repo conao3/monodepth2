@@ -27,8 +27,8 @@ def compute_errors(gt, pred):
     """Computation of error metrics between predicted and ground truth depths"""
     thresh = np.maximum((gt / pred), (pred / gt))
     a1 = (thresh < 1.25).mean()
-    a2 = (thresh < 1.25 ** 2).mean()
-    a3 = (thresh < 1.25 ** 3).mean()
+    a2 = (thresh < 1.25**2).mean()
+    a3 = (thresh < 1.25**3).mean()
 
     rmse = (gt - pred) ** 2
     rmse = np.sqrt(rmse.mean())
@@ -228,7 +228,7 @@ def evaluate(opt):
                 ]
             ).astype(np.int32)
             crop_mask = np.zeros(mask.shape)
-            crop_mask[crop[0]: crop[1], crop[2]: crop[3]] = 1
+            crop_mask[crop[0] : crop[1], crop[2] : crop[3]] = 1
             mask = np.logical_and(mask, crop_mask)
 
         else:
