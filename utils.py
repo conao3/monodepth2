@@ -7,7 +7,7 @@
 import os
 import hashlib
 import zipfile
-from six.moves import urllib
+import urllib.request
 
 
 def readlines(filename):
